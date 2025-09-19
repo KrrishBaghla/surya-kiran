@@ -1,5 +1,0 @@
-event1_id,event2_id,event1_source,event2_source,time_separation_hours,angular_separation_deg,correlation_score,correlation_type,confidence_level,notes
-ZTF24_afterglow_test,ZTF24_rand6,ZTF,ZTF,12.7,7.7761373013905555,0.999794956551407,joint,high,"Δt=12.70h, Δθ=7.7761373013905555°, score=1.000"
-ZTF24_afterglow_test,ZTF24_rand7,ZTF,ZTF,14.7,16.266062300311766,0.7174199215972249,joint,high,"Δt=14.70h, Δθ=16.266062300311766°, score=0.717"
-ZTF24_rand2,SN2024B,ZTF,TNS,3.0,1.841313848186769,0.9999994764466416,joint,high,"Δt=3.00h, Δθ=1.841313848186769°, score=1.000"
-ZTF24_rand6,ZTF24_rand7,ZTF,ZTF,2.0,12.987858523977618,0.9667510324040003,joint,high,"Δt=2.00h, Δθ=12.987858523977618°, score=0.967"

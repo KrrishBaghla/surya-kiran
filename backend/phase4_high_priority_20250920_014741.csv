@@ -1,2 +1,0 @@
-event1_id,event2_id,event1_source,event2_source,time_separation_hours,angular_separation_deg,correlation_score,correlation_type,confidence_level,notes
-ZTF24_rand0,ZTF24_rand1,ZTF,ZTF,2.0,15.673891579117834,0.9451983999164768,joint,high,"Δt=2.00h, Δθ=15.673891579117834°, score=0.945"
