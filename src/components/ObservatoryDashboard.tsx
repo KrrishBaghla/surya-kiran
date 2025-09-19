@@ -11,16 +11,50 @@ import {
   Clock,
   CheckCircle,
   XCircle,
-  Minus
+  Minus,
+  RefreshCw
 } from 'lucide-react';
 import StatusCard from './StatusCard';
-import { mockEvents, mockCorrelations, mockDataSources } from '../utils/mockData';
-import { CosmicEvent, Correlation, DataSource } from '../types';
+import { apiClient, Event, Correlation } from '../lib/api';
 
 const ObservatoryDashboard: React.FC = () => {
-  const [events, setEvents] = useState<CosmicEvent[]>(mockEvents);
-  const [correlations, setCorrelations] = useState<Correlation[]>(mockCorrelations);
-  const [dataSources, setDataSources] = useState<DataSource[]>(mockDataSources);
+  const [events, setEvents] = useState<Event[]>([]);
+  const [correlations, setCorrelations] = useState<Correlation[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  // Load data on component mount
+  useEffect(() => {
+    loadData();
+  }, []);
+
+  const loadData = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      const [eventsResponse, resultsResponse] = await Promise.all([
+        apiClient.getEvents(),
+        apiClient.getResults()
+      ]);
+      
+      setEvents(eventsResponse.events);
+      setCorrelations(resultsResponse.correlations);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to load data');
+      console.error('Error loading data:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Mock data sources for now (could be made dynamic later)
+  const dataSources = [
+    { name: 'GWOSC', status: 'ACTIVE', events: events.filter(e => e.source === 'GWOSC').length, confidence: 0.95, type: 'Gravitational Waves', lastUpdate: new Date().toISOString() },
+    { name: 'HEASARC', status: 'ACTIVE', events: events.filter(e => e.source === 'HEASARC').length, confidence: 0.92, type: 'Gamma Rays', lastUpdate: new Date().toISOString() },
+    { name: 'ZTF', status: 'ACTIVE', events: events.filter(e => e.source === 'ZTF').length, confidence: 0.88, type: 'Optical', lastUpdate: new Date().toISOString() },
+    { name: 'TNS', status: 'ACTIVE', events: events.filter(e => e.source === 'TNS').length, confidence: 0.90, type: 'Supernovae', lastUpdate: new Date().toISOString() }
+  ];
 
   const getEventIcon = (type: string) => {
     switch (type) {
@@ -55,6 +89,25 @@ const ObservatoryDashboard: React.FC = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-black via-gray-900 to-black p-6">
       <div className="max-w-7xl mx-auto space-y-8">
+        {/* Header with refresh button */}
+        <div className="flex items-center justify-between">
+          <h1 className="text-3xl font-bold text-white">Observatory Dashboard</h1>
+          <button
+            onClick={loadData}
+            disabled={loading}
+            className="flex items-center gap-2 px-4 py-2 bg-cyan-600 hover:bg-cyan-700 disabled:bg-gray-600 text-white rounded-lg transition-colors"
+          >
+            <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+            {loading ? 'Loading...' : 'Refresh'}
+          </button>
+        </div>
+
+        {error && (
+          <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-lg text-red-400">
+            {error}
+          </div>
+        )}
+
         {/* Status Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           <StatusCard

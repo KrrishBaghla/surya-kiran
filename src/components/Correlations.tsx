@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { 
   Network, 
@@ -8,16 +8,102 @@ import {
   AlertTriangle,
   Star,
   Zap,
-  Target
+  Target,
+  RefreshCw,
+  Download,
+  Play
 } from 'lucide-react';
-import { mockCorrelations, mockEvents } from '../utils/mockData';
+import { apiClient, Correlation, Event } from '../lib/api';
 
 const Correlations: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterPriority, setFilterPriority] = useState<string>('all');
   const [filterInterest, setFilterInterest] = useState<string>('all');
+  const [correlations, setCorrelations] = useState<Correlation[]>([]);
+  const [events, setEvents] = useState<Event[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [analysisStatus, setAnalysisStatus] = useState<any>(null);
 
-  const filteredCorrelations = mockCorrelations.filter(corr => {
+  // Load data on component mount
+  useEffect(() => {
+    loadData();
+  }, []);
+
+  const loadData = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      // Check if we have analysis results
+      const status = await apiClient.getStatus();
+      setAnalysisStatus(status);
+      
+      if (status.analysis_cache?.has_phase5) {
+        // Load correlations and events
+        const [resultsResponse, eventsResponse] = await Promise.all([
+          apiClient.getResults(),
+          apiClient.getEvents()
+        ]);
+        
+        setCorrelations(resultsResponse.correlations);
+        setEvents(eventsResponse.events);
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to load data');
+      console.error('Error loading data:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const runAnalysis = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      // First collect data
+      await apiClient.collectData({
+        gw_limit: 15,
+        ztf_limit: 20,
+        tns_limit: 15,
+        grb_limit: 15
+      });
+      
+      // Then run correlation analysis
+      await apiClient.analyzeCorrelations({
+        adaptive_mode: true,
+        export_results: true
+      });
+      
+      // Reload data
+      await loadData();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Analysis failed');
+      console.error('Error running analysis:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const exportData = async (format: 'json' | 'csv') => {
+    try {
+      const blob = await apiClient.exportData(format);
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `correlations_${new Date().toISOString().split('T')[0]}.${format}`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Export failed');
+      console.error('Error exporting data:', err);
+    }
+  };
+
+  const filteredCorrelations = correlations.filter(corr => {
     const matchesSearch = corr.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          corr.event1_source.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          corr.event2_source.toLowerCase().includes(searchTerm.toLowerCase());
@@ -28,7 +114,7 @@ const Correlations: React.FC = () => {
   });
 
   const getEvent = (eventId: string) => {
-    return mockEvents.find(event => event.id === eventId);
+    return events.find(event => event.id === eventId);
   };
 
   const getPriorityColor = (priority: string) => {
@@ -75,13 +161,73 @@ const Correlations: React.FC = () => {
           </p>
         </div>
 
+        {/* Control Panel */}
+        <div className="bg-black/40 backdrop-blur-sm border border-gray-700/50 rounded-xl p-6">
+          <div className="flex flex-col md:flex-row gap-4 items-center justify-between">
+            <div className="flex items-center gap-4">
+              <button
+                onClick={runAnalysis}
+                disabled={loading}
+                className="flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-700 disabled:bg-gray-600 text-white rounded-lg transition-colors"
+              >
+                <Play className="w-4 h-4" />
+                {loading ? 'Running Analysis...' : 'Run Analysis'}
+              </button>
+              
+              <button
+                onClick={loadData}
+                disabled={loading}
+                className="flex items-center gap-2 px-4 py-2 bg-cyan-600 hover:bg-cyan-700 disabled:bg-gray-600 text-white rounded-lg transition-colors"
+              >
+                <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+                Refresh
+              </button>
+            </div>
+            
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => exportData('json')}
+                disabled={correlations.length === 0}
+                className="flex items-center gap-2 px-3 py-2 bg-green-600 hover:bg-green-700 disabled:bg-gray-600 text-white rounded-lg transition-colors text-sm"
+              >
+                <Download className="w-4 h-4" />
+                JSON
+              </button>
+              
+              <button
+                onClick={() => exportData('csv')}
+                disabled={correlations.length === 0}
+                className="flex items-center gap-2 px-3 py-2 bg-orange-600 hover:bg-orange-700 disabled:bg-gray-600 text-white rounded-lg transition-colors text-sm"
+              >
+                <Download className="w-4 h-4" />
+                CSV
+              </button>
+            </div>
+          </div>
+          
+          {error && (
+            <div className="mt-4 p-3 bg-red-500/10 border border-red-500/20 rounded-lg text-red-400 text-sm">
+              {error}
+            </div>
+          )}
+          
+          {analysisStatus && (
+            <div className="mt-4 p-3 bg-blue-500/10 border border-blue-500/20 rounded-lg text-blue-400 text-sm">
+              <div className="flex items-center gap-2">
+                <div className={`w-2 h-2 rounded-full ${analysisStatus.analysis_cache?.has_phase5 ? 'bg-green-400' : 'bg-yellow-400'}`} />
+                Analysis Status: {analysisStatus.analysis_cache?.has_phase5 ? 'Complete' : 'Incomplete'}
+              </div>
+            </div>
+          )}
+        </div>
+
         {/* Stats */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <motion.div
             className="bg-purple-500/10 border border-purple-500/20 rounded-xl p-4 text-center"
             whileHover={{ scale: 1.05 }}
           >
-            <div className="text-2xl font-bold text-white">{mockCorrelations.length}</div>
+            <div className="text-2xl font-bold text-white">{correlations.length}</div>
             <div className="text-sm text-purple-400">Total Correlations</div>
           </motion.div>
 
@@ -90,7 +236,7 @@ const Correlations: React.FC = () => {
             whileHover={{ scale: 1.05 }}
           >
             <div className="text-2xl font-bold text-white">
-              {mockCorrelations.filter(c => c.scientific_interest === 'BREAKTHROUGH').length}
+              {correlations.filter(c => c.scientific_interest === 'BREAKTHROUGH').length}
             </div>
             <div className="text-sm text-red-400">Breakthroughs</div>
           </motion.div>
@@ -100,7 +246,7 @@ const Correlations: React.FC = () => {
             whileHover={{ scale: 1.05 }}
           >
             <div className="text-2xl font-bold text-white">
-              {mockCorrelations.filter(c => c.cross_messenger).length}
+              {correlations.filter(c => c.cross_messenger).length}
             </div>
             <div className="text-sm text-cyan-400">Cross-Messenger</div>
           </motion.div>
@@ -110,7 +256,7 @@ const Correlations: React.FC = () => {
             whileHover={{ scale: 1.05 }}
           >
             <div className="text-2xl font-bold text-white">
-              {Math.round(mockCorrelations.reduce((acc, c) => acc + c.confidence, 0) / mockCorrelations.length * 100)}%
+              {correlations.length > 0 ? Math.round(correlations.reduce((acc, c) => acc + c.confidence, 0) / correlations.length * 100) : 0}%
             </div>
             <div className="text-sm text-green-400">Avg Confidence</div>
           </motion.div>

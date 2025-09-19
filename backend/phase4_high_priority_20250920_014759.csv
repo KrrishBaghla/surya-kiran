@@ -1,0 +1,3 @@
+event1_id,event2_id,event1_source,event2_source,time_separation_hours,angular_separation_deg,correlation_score,correlation_type,confidence_level,notes
+ZTF24_rand2,SN2024E,ZTF,TNS,12.0,18.463751472037533,0.7333131107207728,joint,high,"Δt=12.00h, Δθ=18.463751472037533°, score=0.733"
+SN2024B,SN2024D,TNS,TNS,6.0,5.045210488886798,0.9999988007956344,joint,high,"Δt=6.00h, Δθ=5.045210488886798°, score=1.000"

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   LineChart, 
   Line, 
@@ -17,14 +17,81 @@ import {
   Legend 
 } from 'recharts';
 import { motion } from 'framer-motion';
-import { BarChart3, TrendingUp, Activity, Zap } from 'lucide-react';
-import { generateTimeSeriesData, mockEvents, mockCorrelations } from '../utils/mockData';
+import { BarChart3, TrendingUp, Activity, Zap, RefreshCw, AlertCircle } from 'lucide-react';
+import { apiClient, Event, Correlation } from '../lib/api';
 
 const Analytics: React.FC = () => {
+  const [events, setEvents] = useState<Event[]>([]);
+  const [correlations, setCorrelations] = useState<Correlation[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
+
+  const loadData = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      const [eventsResponse, correlationsResponse] = await Promise.all([
+        apiClient.getEvents(),
+        apiClient.getResults()
+      ]);
+      
+      setEvents(eventsResponse.events);
+      setCorrelations(correlationsResponse.correlations);
+      setLastUpdated(new Date());
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to load data');
+      console.error('Error loading analytics data:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadData();
+  }, []);
+
+  // Generate time series data from events
+  const generateTimeSeriesData = () => {
+    if (events.length === 0) return [];
+    
+    const now = new Date();
+    const days = 7;
+    const data = [];
+    
+    for (let i = days; i >= 0; i--) {
+      const date = new Date(now);
+      date.setDate(date.getDate() - i);
+      const dayStart = new Date(date);
+      dayStart.setHours(0, 0, 0, 0);
+      const dayEnd = new Date(date);
+      dayEnd.setHours(23, 59, 59, 999);
+      
+      const dayEvents = events.filter(event => {
+        const eventTime = new Date(event.time);
+        return eventTime >= dayStart && eventTime <= dayEnd;
+      });
+      
+      const dayCorrelations = correlations.filter(corr => {
+        const corrTime = new Date(corr.time_separation); // Using time_separation as proxy
+        return corrTime >= dayStart && corrTime <= dayEnd;
+      });
+      
+      data.push({
+        time: date.toLocaleDateString(),
+        events: dayEvents.length,
+        correlations: dayCorrelations.length
+      });
+    }
+    
+    return data;
+  };
+
   const timeSeriesData = generateTimeSeriesData();
 
   const eventTypeData = Object.entries(
-    mockEvents.reduce((acc, event) => {
+    events.reduce((acc, event) => {
       acc[event.event_type] = (acc[event.event_type] || 0) + 1;
       return acc;
     }, {} as Record<string, number>)
@@ -32,21 +99,21 @@ const Analytics: React.FC = () => {
     name: type.replace('_', ' '),
     value: count,
     color: type === 'gravitational_wave' ? '#06b6d4' :
-           type === 'gamma_burst' ? '#f59e0b' :
+           type === 'gamma_ray_burst' ? '#f59e0b' :
            type === 'optical_transient' ? '#10b981' :
-           type === 'neutrino' ? '#8b5cf6' :
+           type === 'supernova' ? '#8b5cf6' :
            '#ef4444'
   }));
 
   const sourceData = Object.entries(
-    mockEvents.reduce((acc, event) => {
+    events.reduce((acc, event) => {
       acc[event.source] = (acc[event.source] || 0) + 1;
       return acc;
     }, {} as Record<string, number>)
   ).map(([source, count]) => ({ name: source, events: count }));
 
   const priorityData = Object.entries(
-    mockEvents.reduce((acc, event) => {
+    events.reduce((acc, event) => {
       acc[event.priority] = (acc[event.priority] || 0) + 1;
       return acc;
     }, {} as Record<string, number>)
@@ -59,7 +126,7 @@ const Analytics: React.FC = () => {
           '#10b981'
   }));
 
-  const confidenceData = mockEvents.map((event, index) => ({
+  const confidenceData = events.map((event, index) => ({
     name: `Event ${index + 1}`,
     confidence: Math.round(event.confidence * 100),
     type: event.event_type
@@ -81,6 +148,39 @@ const Analytics: React.FC = () => {
     return null;
   };
 
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-black via-gray-900 to-black p-6">
+        <div className="max-w-7xl mx-auto flex items-center justify-center h-96">
+          <div className="text-center">
+            <RefreshCw className="w-8 h-8 text-cyan-400 animate-spin mx-auto mb-4" />
+            <p className="text-gray-300">Loading analytics dashboard...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-black via-gray-900 to-black p-6">
+        <div className="max-w-7xl mx-auto flex items-center justify-center h-96">
+          <div className="text-center">
+            <AlertCircle className="w-8 h-8 text-red-400 mx-auto mb-4" />
+            <p className="text-red-400 mb-4">Error loading analytics data</p>
+            <p className="text-gray-300 mb-4">{error}</p>
+            <button
+              onClick={loadData}
+              className="px-4 py-2 bg-cyan-500/20 border border-cyan-500/30 rounded-lg text-cyan-400 hover:bg-cyan-500/30 transition-colors"
+            >
+              Retry
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-black via-gray-900 to-black p-6">
       <div className="max-w-7xl mx-auto space-y-8">
@@ -93,6 +193,23 @@ const Analytics: React.FC = () => {
           <p className="text-gray-300">
             Statistical analysis and trends of cosmic event detection and correlation
           </p>
+          {lastUpdated && (
+            <p className="text-sm text-gray-400 mt-2">
+              Last updated: {lastUpdated.toLocaleTimeString()}
+            </p>
+          )}
+        </div>
+
+        {/* Refresh Button */}
+        <div className="flex justify-center">
+          <button
+            onClick={loadData}
+            disabled={loading}
+            className="px-6 py-2 bg-cyan-500/20 border border-cyan-500/30 rounded-lg text-cyan-400 hover:bg-cyan-500/30 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+          >
+            <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+            Refresh Data
+          </button>
         </div>
 
         {/* Key Metrics */}
@@ -103,14 +220,14 @@ const Analytics: React.FC = () => {
           >
             <div className="flex items-center justify-between">
               <div>
-                <div className="text-2xl font-bold text-white">{mockEvents.length}</div>
+                <div className="text-2xl font-bold text-white">{events.length}</div>
                 <div className="text-cyan-400 text-sm">Total Events</div>
               </div>
               <Activity className="w-8 h-8 text-cyan-400" />
             </div>
             <div className="mt-4 flex items-center gap-2">
               <TrendingUp className="w-4 h-4 text-green-400" />
-              <span className="text-green-400 text-sm">+15% this week</span>
+              <span className="text-green-400 text-sm">Live data</span>
             </div>
           </motion.div>
 
@@ -120,14 +237,14 @@ const Analytics: React.FC = () => {
           >
             <div className="flex items-center justify-between">
               <div>
-                <div className="text-2xl font-bold text-white">{mockCorrelations.length}</div>
+                <div className="text-2xl font-bold text-white">{correlations.length}</div>
                 <div className="text-purple-400 text-sm">Correlations</div>
               </div>
               <Zap className="w-8 h-8 text-purple-400" />
             </div>
             <div className="mt-4 flex items-center gap-2">
               <TrendingUp className="w-4 h-4 text-green-400" />
-              <span className="text-green-400 text-sm">+8% correlation rate</span>
+              <span className="text-green-400 text-sm">Live analysis</span>
             </div>
           </motion.div>
 
@@ -137,14 +254,16 @@ const Analytics: React.FC = () => {
           >
             <div className="flex items-center justify-between">
               <div>
-                <div className="text-2xl font-bold text-white">87%</div>
+                <div className="text-2xl font-bold text-white">
+                  {events.length > 0 ? Math.round(events.reduce((acc, e) => acc + e.confidence, 0) / events.length * 100) : 0}%
+                </div>
                 <div className="text-orange-400 text-sm">Avg Confidence</div>
               </div>
               <BarChart3 className="w-8 h-8 text-orange-400" />
             </div>
             <div className="mt-4 flex items-center gap-2">
               <TrendingUp className="w-4 h-4 text-green-400" />
-              <span className="text-green-400 text-sm">+3% accuracy</span>
+              <span className="text-green-400 text-sm">Real-time</span>
             </div>
           </motion.div>
 
@@ -154,14 +273,16 @@ const Analytics: React.FC = () => {
           >
             <div className="flex items-center justify-between">
               <div>
-                <div className="text-2xl font-bold text-white">5</div>
+                <div className="text-2xl font-bold text-white">
+                  {new Set(events.map(e => e.source)).size}
+                </div>
                 <div className="text-green-400 text-sm">Active Sources</div>
               </div>
               <Activity className="w-8 h-8 text-green-400" />
             </div>
             <div className="mt-4 flex items-center gap-2">
               <TrendingUp className="w-4 h-4 text-green-400" />
-              <span className="text-green-400 text-sm">100% uptime</span>
+              <span className="text-green-400 text-sm">Live monitoring</span>
             </div>
           </motion.div>
         </div>

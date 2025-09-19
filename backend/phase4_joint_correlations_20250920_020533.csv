@@ -1,0 +1,6 @@
+event1_id,event2_id,event1_source,event2_source,time_separation_hours,angular_separation_deg,correlation_score,correlation_type,confidence_level,notes
+GRB240925_TEST,ZTF24_afterglow_test,HEASARC,ZTF,0.3,0.05830951894846265,0.5490109637724663,joint,medium,"Δt=0.30h, Δθ=0.05830951894846265°, score=0.549"
+ZTF24_afterglow_test,ZTF24_rand4,ZTF,ZTF,8.7,23.69752455517694,0.6000366946579127,joint,medium,"Δt=8.70h, Δθ=23.69752455517694°, score=0.600"
+ZTF24_rand4,SN2024A,ZTF,TNS,4.0,21.324562184661442,0.6003948056484752,joint,medium,"Δt=4.00h, Δθ=21.324562184661442°, score=0.600"
+ZTF24_rand5,ZTF24_rand6,ZTF,ZTF,2.0,24.726462749030937,0.6000131633712001,joint,medium,"Δt=2.00h, Δθ=24.726462749030937°, score=0.600"
+ZTF24_rand6,SN2024E,ZTF,TNS,4.0,26.338185306629693,0.6000026255322787,joint,medium,"Δt=4.00h, Δθ=26.338185306629693°, score=0.600"

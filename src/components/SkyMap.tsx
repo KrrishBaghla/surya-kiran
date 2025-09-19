@@ -1,15 +1,46 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { ScatterChart, Scatter, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 import { motion } from 'framer-motion';
-import { mockEvents, mockCorrelations } from '../utils/mockData';
-import { Map, Target, Crosshair } from 'lucide-react';
+import { Map, Target, Crosshair, RefreshCw, AlertCircle } from 'lucide-react';
+import { apiClient, Event, Correlation } from '../lib/api';
 
 const SkyMap: React.FC = () => {
-  const skyData = mockEvents
+  const [events, setEvents] = useState<Event[]>([]);
+  const [correlations, setCorrelations] = useState<Correlation[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
+
+  const loadData = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      const [eventsResponse, correlationsResponse] = await Promise.all([
+        apiClient.getEvents(),
+        apiClient.getResults()
+      ]);
+      
+      setEvents(eventsResponse.events);
+      setCorrelations(correlationsResponse.correlations);
+      setLastUpdated(new Date());
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to load data');
+      console.error('Error loading sky map data:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadData();
+  }, []);
+
+  const skyData = events
     .filter(event => event.ra !== undefined && event.dec !== undefined)
     .map(event => ({
-      ra: event.ra,
-      dec: event.dec,
+      ra: event.ra!,
+      dec: event.dec!,
       id: event.id,
       source: event.source,
       type: event.event_type,
@@ -48,10 +79,43 @@ const SkyMap: React.FC = () => {
   };
 
   const correlatedEvents = new Set();
-  mockCorrelations.forEach(corr => {
+  correlations.forEach(corr => {
     correlatedEvents.add(corr.event1_id);
     correlatedEvents.add(corr.event2_id);
   });
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-black via-gray-900 to-black p-6">
+        <div className="max-w-7xl mx-auto flex items-center justify-center h-96">
+          <div className="text-center">
+            <RefreshCw className="w-8 h-8 text-cyan-400 animate-spin mx-auto mb-4" />
+            <p className="text-gray-300">Loading celestial sky map...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-black via-gray-900 to-black p-6">
+        <div className="max-w-7xl mx-auto flex items-center justify-center h-96">
+          <div className="text-center">
+            <AlertCircle className="w-8 h-8 text-red-400 mx-auto mb-4" />
+            <p className="text-red-400 mb-4">Error loading sky map data</p>
+            <p className="text-gray-300 mb-4">{error}</p>
+            <button
+              onClick={loadData}
+              className="px-4 py-2 bg-cyan-500/20 border border-cyan-500/30 rounded-lg text-cyan-400 hover:bg-cyan-500/30 transition-colors"
+            >
+              Retry
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-black via-gray-900 to-black p-6">
@@ -65,6 +129,11 @@ const SkyMap: React.FC = () => {
           <p className="text-gray-300">
             Real-time visualization of cosmic events in celestial coordinates
           </p>
+          {lastUpdated && (
+            <p className="text-sm text-gray-400 mt-2">
+              Last updated: {lastUpdated.toLocaleTimeString()}
+            </p>
+          )}
         </div>
 
         {/* Stats Cards */}
@@ -102,10 +171,22 @@ const SkyMap: React.FC = () => {
             whileHover={{ scale: 1.05 }}
           >
             <div className="text-xl font-bold text-white">
-              {Math.round(skyData.reduce((acc, e) => acc + e.confidence, 0) / skyData.length * 100)}%
+              {skyData.length > 0 ? Math.round(skyData.reduce((acc, e) => acc + e.confidence, 0) / skyData.length * 100) : 0}%
             </div>
             <div className="text-sm text-green-400">Avg Confidence</div>
           </motion.div>
+        </div>
+
+        {/* Refresh Button */}
+        <div className="flex justify-center">
+          <button
+            onClick={loadData}
+            disabled={loading}
+            className="px-6 py-2 bg-cyan-500/20 border border-cyan-500/30 rounded-lg text-cyan-400 hover:bg-cyan-500/30 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+          >
+            <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+            Refresh Data
+          </button>
         </div>
 
         {/* Sky Map Chart */}
@@ -114,40 +195,50 @@ const SkyMap: React.FC = () => {
             Right Ascension vs Declination
           </h2>
           
-          <ResponsiveContainer width="100%" height={500}>
-            <ScatterChart margin={{ top: 20, right: 20, bottom: 60, left: 60 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
-              <XAxis 
-                type="number" 
-                domain={[0, 360]}
-                dataKey="ra"
-                stroke="#9ca3af"
-                label={{ value: 'Right Ascension (degrees)', position: 'insideBottom', offset: -5 }}
-              />
-              <YAxis 
-                type="number" 
-                domain={[-90, 90]}
-                dataKey="dec"
-                stroke="#9ca3af"
-                label={{ value: 'Declination (degrees)', angle: -90, position: 'insideLeft' }}
-              />
-              <Tooltip content={<CustomTooltip />} />
-              
-              <Scatter 
-                data={skyData} 
-                fill="#06b6d4"
-              >
-                {skyData.map((entry, index) => (
-                  <Cell 
-                    key={`cell-${index}`} 
-                    fill={getEventColor(entry.priority)}
-                    stroke={correlatedEvents.has(entry.id) ? '#a855f7' : 'none'}
-                    strokeWidth={correlatedEvents.has(entry.id) ? 2 : 0}
-                  />
-                ))}
-              </Scatter>
-            </ScatterChart>
-          </ResponsiveContainer>
+          {skyData.length > 0 ? (
+            <ResponsiveContainer width="100%" height={500}>
+              <ScatterChart margin={{ top: 20, right: 20, bottom: 60, left: 60 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+                <XAxis 
+                  type="number" 
+                  domain={[0, 360]}
+                  dataKey="ra"
+                  stroke="#9ca3af"
+                  label={{ value: 'Right Ascension (degrees)', position: 'insideBottom', offset: -5 }}
+                />
+                <YAxis 
+                  type="number" 
+                  domain={[-90, 90]}
+                  dataKey="dec"
+                  stroke="#9ca3af"
+                  label={{ value: 'Declination (degrees)', angle: -90, position: 'insideLeft' }}
+                />
+                <Tooltip content={<CustomTooltip />} />
+                
+                <Scatter 
+                  data={skyData} 
+                  fill="#06b6d4"
+                >
+                  {skyData.map((entry, index) => (
+                    <Cell 
+                      key={`cell-${index}`} 
+                      fill={getEventColor(entry.priority)}
+                      stroke={correlatedEvents.has(entry.id) ? '#a855f7' : 'none'}
+                      strokeWidth={correlatedEvents.has(entry.id) ? 2 : 0}
+                    />
+                  ))}
+                </Scatter>
+              </ScatterChart>
+            </ResponsiveContainer>
+          ) : (
+            <div className="flex items-center justify-center h-96 text-gray-400">
+              <div className="text-center">
+                <Map className="w-12 h-12 mx-auto mb-4 opacity-50" />
+                <p>No events with coordinates available</p>
+                <p className="text-sm">Run analysis to collect data</p>
+              </div>
+            </div>
+          )}
 
           {/* Legend */}
           <div className="mt-6 flex flex-wrap justify-center gap-6">
@@ -204,6 +295,9 @@ const SkyMap: React.FC = () => {
                   <span className="text-cyan-400 font-medium">{count} events</span>
                 </div>
               ))}
+              {skyData.length === 0 && (
+                <p className="text-gray-400 text-sm">No events with coordinates available</p>
+              )}
             </div>
           </div>
         </div>

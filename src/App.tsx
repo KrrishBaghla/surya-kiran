@@ -2,11 +2,11 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Header from './components/Header';
 import ObservatoryDashboard from './components/ObservatoryDashboard';
-import SolarSystemView from './components/SolarSystemView';
 import SkyMap from './components/SkyMap';
 import Correlations from './components/Correlations';
 import Analytics from './components/Analytics';
 import { ViewType } from './types';
+import StarMap from './components/StarMap';
 
 const App: React.FC = () => {
   const [currentView, setCurrentView] = useState<ViewType>('observatory');
@@ -17,7 +17,7 @@ const App: React.FC = () => {
       case 'observatory':
         return <ObservatoryDashboard />;
       case 'solar-system':
-        return <SolarSystemView />;
+        return <StarMap />;
       case 'sky-map':
         return <SkyMap />;
       case 'correlations':
