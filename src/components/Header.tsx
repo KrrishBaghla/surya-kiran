@@ -9,7 +9,8 @@ import {
   Radio, 
   Settings,
   AlertTriangle,
-  CheckCircle
+  CheckCircle,
+  Cpu
 } from 'lucide-react';
 
 interface HeaderProps {
@@ -30,6 +31,7 @@ const Header: React.FC<HeaderProps> = ({
     { id: 'solar-system', name: 'Solar System', icon: Globe },
     { id: 'sky-map', name: 'Sky Map', icon: Map },
     { id: 'correlations', name: 'Correlations', icon: Network },
+    { id: 'live-correlation', name: 'Live Engine', icon: Cpu },
     { id: 'analytics', name: 'Analytics', icon: BarChart3 }
   ] as const;
 
@@ -77,7 +79,7 @@ const Header: React.FC<HeaderProps> = ({
             })}
           </nav>
 
-          <div className="flex items-center gap-4">
+          {/* <div className="flex items-center gap-4">
             <button
               onClick={onLiveModeToggle}
               className={`
@@ -100,7 +102,7 @@ const Header: React.FC<HeaderProps> = ({
             <button className="p-2 rounded-lg text-gray-300 hover:text-white hover:bg-white/5 transition-colors">
               <Settings className="w-5 h-5" />
             </button>
-          </div>
+          </div> */}
         </div>
       </div>
     </header>

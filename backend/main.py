@@ -17,6 +17,9 @@ from models.schemas import (
     EventResponse, CorrelationResponse, AnalysisStatus, 
     DataCollectionRequest, AnalysisRequest
 )
+from correlator.live_correlation_engine import (
+    LiveCorrelationEngine, CorrelationParameters, EventType, PriorityLevel
+)
 
 # Setup logging
 logging.basicConfig(level=logging.INFO)
@@ -174,7 +177,14 @@ async def get_results():
     """Get current analysis results"""
     try:
         if not analysis_cache["phase5_results"]:
-            raise HTTPException(status_code=404, detail="No analysis results available")
+            return {
+                "status": "success",
+                "timestamp": datetime.now().isoformat(),
+                "total_correlations": 0,
+                "correlations": [],
+                "summary_stats": {},
+                "message": "No analysis results available. Please run correlation analysis first."
+            }
         
         phase5_results = analysis_cache["phase5_results"]["results"]
         scored_correlations = phase5_results.get("scored_correlations", [])
@@ -227,7 +237,13 @@ async def get_events():
     """Get all collected events"""
     try:
         if not analysis_cache["phase2_data"]:
-            raise HTTPException(status_code=404, detail="No events available")
+            return {
+                "status": "success",
+                "timestamp": datetime.now().isoformat(),
+                "total_events": 0,
+                "events": [],
+                "message": "No events available. Please run data collection first."
+            }
         
         analyzer = analysis_cache["phase2_data"]["analyzer"]
         all_events = analyzer.all_events
@@ -357,6 +373,71 @@ async def health_check():
         "status": "healthy",
         "timestamp": datetime.now().isoformat(),
         "version": "1.0.0"
+    }
+
+@app.get("/api/v1/data-sources")
+async def get_data_sources():
+    """Get information about all data sources"""
+    try:
+        engine = LiveCorrelationEngine()
+        return engine.get_data_sources_info()
+    except Exception as e:
+        logger.error(f"Failed to get data sources: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to get data sources: {str(e)}")
+
+@app.post("/api/v1/live-correlation")
+async def run_live_correlation_analysis(request: dict):
+    """Run live correlation analysis with custom parameters"""
+    try:
+        # Parse request parameters
+        event_types = [EventType(et) for et in request.get('event_types', [
+            'gravitational_wave', 'gamma_burst', 'optical_transient', 'neutrino', 'radio_burst'
+        ])]
+        
+        params = CorrelationParameters(
+            event_types=event_types,
+            ra_min=request.get('ra_min', 0.0),
+            ra_max=request.get('ra_max', 360.0),
+            dec_min=request.get('dec_min', -90.0),
+            dec_max=request.get('dec_max', 90.0),
+            confidence_threshold=request.get('confidence_threshold', 0.1),
+            max_angular_separation=request.get('max_angular_separation', 10.0),
+            max_time_separation=request.get('max_time_separation', 72.0),
+            gw_limit=request.get('gw_limit', 15),
+            ztf_limit=request.get('ztf_limit', 20),
+            tns_limit=request.get('tns_limit', 15),
+            grb_limit=request.get('grb_limit', 15)
+        )
+        
+        logger.info("Starting live correlation analysis...")
+        engine = LiveCorrelationEngine()
+        results = await engine.run_live_correlation_analysis(params)
+        
+        return results
+        
+    except Exception as e:
+        logger.error(f"Live correlation analysis failed: {e}")
+        raise HTTPException(status_code=500, detail=f"Live correlation analysis failed: {str(e)}")
+
+@app.get("/api/v1/priority-levels")
+async def get_priority_levels():
+    """Get information about priority levels and thresholds"""
+    engine = LiveCorrelationEngine()
+    return {
+        "priority_levels": {
+            level.value: {
+                "name": level.value,
+                "threshold": engine.priority_thresholds[level],
+                "description": {
+                    PriorityLevel.CRITICAL: "Immediate follow-up required - potential breakthrough discovery",
+                    PriorityLevel.HIGH: "High priority - significant scientific interest",
+                    PriorityLevel.MEDIUM: "Medium priority - routine correlation",
+                    PriorityLevel.LOW: "Low priority - background correlation"
+                }[level]
+            } for level in PriorityLevel
+        },
+        "event_types": [et.value for et in EventType],
+        "timestamp": datetime.now().isoformat()
     }
 
 if __name__ == "__main__":

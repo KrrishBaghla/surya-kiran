@@ -5,6 +5,7 @@ import ObservatoryDashboard from './components/ObservatoryDashboard';
 import SkyMap from './components/SkyMap';
 import Correlations from './components/Correlations';
 import Analytics from './components/Analytics';
+import LiveCorrelationEngine from './components/LiveCorrelationEngine';
 import { ViewType } from './types';
 import StarMap from './components/StarMap';
 
@@ -24,6 +25,8 @@ const App: React.FC = () => {
         return <Correlations />;
       case 'analytics':
         return <Analytics />;
+      case 'live-correlation':
+        return <LiveCorrelationEngine />;
       default:
         return <ObservatoryDashboard />;
     }

@@ -33,4 +33,4 @@ export interface DataSource {
   lastUpdate: string;
 }
 
-export type ViewType = 'observatory' | 'solar-system' | 'sky-map' | 'correlations' | 'analytics';
+export type ViewType = 'observatory' | 'solar-system' | 'sky-map' | 'correlations' | 'analytics' | 'live-correlation';
