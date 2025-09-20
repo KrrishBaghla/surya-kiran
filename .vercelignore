@@ -1,7 +1,10 @@
-# Ignore Python files to prevent Vercel from detecting this as a Python project
+# Ignore entire backend directory and all Python files
+backend/
+api/
 *.py
 main.py
 requirements.txt
+requirements-*.txt
 __pycache__/
 *.pyc
 *.pyo
@@ -27,3 +30,9 @@ coverage.xml
 .env.development.local
 .env.test.local
 .env.production.local
+.env
+.env.example
+
+# Ignore documentation that might confuse Vercel
+*.md
+!README.md
