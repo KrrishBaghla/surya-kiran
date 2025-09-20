@@ -12,7 +12,7 @@ import logging
 from correlator.phase2_correlator import run_pandas_free_correlator
 from correlator.phase3_normalizer import Phase3DataNormalizer
 from correlator.phase4_analyzer import run_enhanced_phase4_analysis
-from correlator.phase5_scorer import run_enhanced_phase5_analysis
+from correlator.phase5_scorer import run_enhanced_phase5_scoring
 from models.schemas import (
     EventResponse, CorrelationResponse, AnalysisStatus, 
     DataCollectionRequest, AnalysisRequest
@@ -148,7 +148,7 @@ async def analyze_correlations(request: AnalysisRequest, background_tasks: Backg
         
         # Phase 5: Enhanced scoring
         logger.info("Running Phase 5: Enhanced scoring...")
-        phase5_results = run_enhanced_phase5_analysis()
+        phase5_results = run_enhanced_phase5_scoring(analysis_cache["phase4_results"].get("correlations", []), analysis_cache["phase2_data"])
         
         analysis_cache["phase5_results"] = {
             "results": phase5_results,
