@@ -1,0 +1,29 @@
+# Minimal Production Requirements
+# Core FastAPI and Web Framework
+fastapi==0.104.1
+uvicorn[standard]==0.24.0
+pydantic==2.5.0
+python-multipart==0.0.6
+
+# Data Processing (minimal set)
+numpy==1.24.3
+pandas==2.1.4
+
+# HTTP Requests
+requests==2.31.0
+
+# Environment Configuration
+python-dotenv==1.0.0
+
+# File Handling
+aiofiles==23.2.1
+
+# Scientific Computing (for astronomical calculations)
+scipy==1.11.4
+astropy==5.3.4
+
+# Async HTTP Requests (for data collection)
+aiohttp==3.9.1
+
+# Logging
+structlog==23.2.0
