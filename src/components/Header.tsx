@@ -1,33 +1,25 @@
 import React from 'react';
 import { ViewType } from '../types';
 import { 
-  Telescope, 
+  Eye, 
   Globe, 
   Map, 
   Network, 
   BarChart3, 
-  Radio, 
-  Settings,
-  AlertTriangle,
-  CheckCircle,
-  Cpu
+  Cpu 
 } from 'lucide-react';
 
 interface HeaderProps {
   currentView: ViewType;
   onViewChange: (view: ViewType) => void;
-  liveMode: boolean;
-  onLiveModeToggle: () => void;
 }
 
 const Header: React.FC<HeaderProps> = ({ 
   currentView, 
-  onViewChange, 
-  liveMode, 
-  onLiveModeToggle 
+  onViewChange
 }) => {
   const views = [
-    { id: 'observatory', name: 'Observatory', icon: Telescope },
+    { id: 'observatory', name: 'Observatory', icon: Eye },
     { id: 'solar-system', name: 'Solar System', icon: Globe },
     { id: 'sky-map', name: 'Sky Map', icon: Map },
     { id: 'correlations', name: 'Correlations', icon: Network },
@@ -42,7 +34,7 @@ const Header: React.FC<HeaderProps> = ({
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-3">
               <div className="relative">
-                <Radio className="w-8 h-8 text-cyan-400" />
+                <Eye className="w-8 h-8 text-cyan-400" />
                 <div className="absolute -top-1 -right-1 w-3 h-3 bg-purple-500 rounded-full animate-pulse" />
               </div>
               <div>

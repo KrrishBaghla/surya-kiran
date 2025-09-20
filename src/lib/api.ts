@@ -4,11 +4,15 @@ export interface Event {
   id: string;
   source: string;
   event_type: string;
+  type: string; // Alias for event_type for compatibility
   time: string;
+  timestamp: string; // Alias for time for compatibility
   ra?: number;
   dec?: number;
+  coordinates?: { ra: number; dec: number }; // For compatibility
   confidence: number;
   priority: string;
+  description?: string; // For compatibility
   metadata: Record<string, any>;
 }
 
@@ -37,6 +41,10 @@ export interface AnalysisStatus {
   phase5_complete: boolean;
   total_events?: number;
   total_correlations?: number;
+  analysis_cache?: {
+    has_phase5: boolean;
+    [key: string]: any;
+  };
 }
 
 export interface DataCollectionRequest {

@@ -7,8 +7,7 @@ import {
   Atom, 
   Satellite,
   Database,
-  Globe,
-  Telescope,
+  Eye,
   Activity,
   Clock,
   CheckCircle,
@@ -75,7 +74,7 @@ const DataSourcesDisplay: React.FC<DataSourcesDisplayProps> = ({ className = '' 
     switch (name) {
       case 'GWOSC': return <Radio className="h-6 w-6 text-purple-400" />;
       case 'HEASARC': return <Zap className="h-6 w-6 text-yellow-400" />;
-      case 'ZTF': return <Telescope className="h-6 w-6 text-blue-400" />;
+      case 'ZTF': return <Eye className="h-6 w-6 text-blue-400" />;
       case 'TNS': return <Star className="h-6 w-6 text-orange-400" />;
       case 'ICECUBE': return <Atom className="h-6 w-6 text-cyan-400" />;
       case 'CHIME': return <Satellite className="h-6 w-6 text-green-400" />;

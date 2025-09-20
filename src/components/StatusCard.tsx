@@ -4,7 +4,7 @@ import { DivideIcon as LucideIcon } from 'lucide-react';
 interface StatusCardProps {
   title: string;
   value: string | number;
-  icon: LucideIcon;
+  icon: typeof LucideIcon;
   trend?: string;
   color?: 'cyan' | 'purple' | 'orange' | 'green' | 'red';
   subtitle?: string;

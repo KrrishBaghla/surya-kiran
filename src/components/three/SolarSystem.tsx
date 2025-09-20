@@ -136,7 +136,6 @@ function AsteroidBelt({ inner = 2.2, outer = 3.4, count = 4500, tilt = 0.05 }: {
   const groupRef = useRef<THREE.Group>(null!);
 
   // Skip texture loading to avoid CORS issues
-  const [rockTex, setRockTex] = useState<THREE.Texture | null>(null);
 
   const palette = useMemo(() => [
     new THREE.Color('#c0c0c0'), // bright gray
@@ -233,7 +232,6 @@ export function SolarSystem({
   onSelect, 
   simulationSpeed = 1, 
   showOrbits = true, 
-  showLabels = true, 
   showAsteroidBelt = true 
 }: { 
   onSelect?: (planet: PlanetInfo | null) => void;
@@ -245,14 +243,13 @@ export function SolarSystem({
   const { camera } = useThree();
   // Access external controls set via <OrbitControls makeDefault /> on the page
   const controls = useThree((state: any) => state.controls);
-  const [focused, setFocused] = useState<PlanetInfo | null>(null);
   const focusTarget = useRef<THREE.Vector3>(new THREE.Vector3(0, 0, 0));
   const desiredCamPos = useRef<THREE.Vector3>(camera.position.clone());
   const focusProgress = useRef<number>(1); // 1 = not focusing
 
   // Animate planets and camera focus
-  useFrame((state, delta) => {
-    const adjustedDelta = delta * simulationSpeed;
+  useFrame((_state, delta) => {
+    // const adjustedDelta = delta * simulationSpeed;
     // Only animate camera/target while focus is in progress
     if (focusProgress.current < 1) {
       const ease = Math.min(1, delta * 2);
@@ -278,7 +275,7 @@ export function SolarSystem({
   }, [controls]);
 
   const handleFocus = (planet: PlanetInfo | null, pos?: THREE.Vector3) => {
-    setFocused(planet);
+    // setFocused(planet);
     if (onSelect) onSelect(planet);
 
     const target = pos ?? new THREE.Vector3(0, 0, 0);

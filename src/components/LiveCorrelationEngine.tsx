@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { 
   Radio, 
   Zap, 
@@ -8,34 +8,24 @@ import {
   Star, 
   AlertCircle,
   TrendingUp,
-  Clock,
-  CheckCircle,
-  XCircle,
-  Minus,
   RefreshCw,
   Settings,
   Filter,
   MapPin,
-  Activity,
   Database,
-  Globe,
   Satellite,
-  Telescope,
+  Eye,
   Cpu,
   BarChart3,
-  Play,
-  Pause,
-  Square
+  Play
 } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
 import { Button } from './ui/button';
-import { Input } from './ui/input';
 import { Label } from './ui/label';
 import { Slider } from './ui/slider';
 import { Badge } from './ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
 import { Checkbox } from './ui/checkbox';
-import { Separator } from './ui/separator';
 import { Progress } from './ui/progress';
 import { Alert, AlertDescription } from './ui/alert';
 
@@ -190,7 +180,7 @@ const LiveCorrelationEngine: React.FC<LiveCorrelationEngineProps> = () => {
     switch (name) {
       case 'GWOSC': return <Radio className="h-5 w-5" />;
       case 'HEASARC': return <Zap className="h-5 w-5" />;
-      case 'ZTF': return <Telescope className="h-5 w-5" />;
+      case 'ZTF': return <Eye className="h-5 w-5" />;
       case 'TNS': return <Star className="h-5 w-5" />;
       case 'ICECUBE': return <Atom className="h-5 w-5" />;
       case 'CHIME': return <Satellite className="h-5 w-5" />;
@@ -285,7 +275,7 @@ const LiveCorrelationEngine: React.FC<LiveCorrelationEngineProps> = () => {
                       <span className="text-sm text-gray-400">{raRange[0]}°</span>
                       <Slider
                         value={raRange}
-                        onValueChange={setRaRange}
+                        onValueChange={(value) => setRaRange([value[0], value[1]])}
                         max={360}
                         min={0}
                         step={1}
@@ -301,7 +291,7 @@ const LiveCorrelationEngine: React.FC<LiveCorrelationEngineProps> = () => {
                       <span className="text-sm text-gray-400">{decRange[0]}°</span>
                       <Slider
                         value={decRange}
-                        onValueChange={setDecRange}
+                        onValueChange={(value) => setDecRange([value[0], value[1]])}
                         max={90}
                         min={-90}
                         step={1}

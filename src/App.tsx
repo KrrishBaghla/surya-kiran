@@ -11,7 +11,7 @@ import StarMap from './components/StarMap';
 
 const App: React.FC = () => {
   const [currentView, setCurrentView] = useState<ViewType>('observatory');
-  const [liveMode, setLiveMode] = useState(true);
+  const [liveMode] = useState(true);
 
   const renderView = () => {
     switch (currentView) {
@@ -49,8 +49,6 @@ const App: React.FC = () => {
       <Header
         currentView={currentView}
         onViewChange={setCurrentView}
-        liveMode={liveMode}
-        onLiveModeToggle={() => setLiveMode(!liveMode)}
       />
       
       <AnimatePresence mode="wait">

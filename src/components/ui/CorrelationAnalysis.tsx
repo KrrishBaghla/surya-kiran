@@ -2,7 +2,6 @@ import { useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
 import { ScatterChart, Scatter, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 import { Calendar, TrendingUp, Zap, AlertTriangle } from 'lucide-react';
-import { Button } from './button';
 import { Badge } from './badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './select';
 
@@ -89,7 +88,7 @@ export function CorrelationAnalysis({ events }: CorrelationAnalysisProps) {
   }, [events, timeWindow, minConfidence]);
 
   const scatterData = useMemo(() => {
-    return correlationData.map((corr, index) => ({
+    return correlationData.map((corr) => ({
       x: corr.timeDiff,
       y: corr.spatialDistance,
       z: corr.correlationScore * 100,
