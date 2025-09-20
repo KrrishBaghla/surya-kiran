@@ -20,3 +20,10 @@ aiofiles==23.2.1
 
 # Scientific Computing (for astronomical calculations)
 scipy==1.11.4
+astropy==5.3.4
+
+# Async HTTP Requests (for data collection)
+aiohttp==3.9.1
+
+# Logging
+structlog==23.2.0

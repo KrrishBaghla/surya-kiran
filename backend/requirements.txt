@@ -38,3 +38,16 @@ structlog==23.2.0
 pytest==7.4.3
 pytest-asyncio==0.21.1
 httpx==0.25.2
+
+# Additional dependencies for correlation analysis
+# (These are already included above, but listed here for clarity)
+# - numpy: For numerical computations and array operations
+# - pandas: For data manipulation and analysis
+# - scipy: For scientific computing and statistical functions
+# - astropy: For astronomical calculations and coordinate transformations
+# - requests: For HTTP API calls to external data sources
+# - aiohttp: For async HTTP requests
+# - asyncio-throttle: For rate limiting API requests
+# - structlog: For structured logging
+# - python-dotenv: For environment variable management
+# - aiofiles: For async file operations
