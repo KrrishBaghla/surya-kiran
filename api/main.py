@@ -5,8 +5,48 @@ from datetime import datetime
 from typing import Dict, Any, List
 import logging
 
-# Import mock data
-from mock_data import get_mock_events, get_mock_correlations
+# Import mock data with error handling
+try:
+    from mock_data import get_mock_events, get_mock_correlations
+except ImportError:
+    # Fallback mock data if import fails
+    def get_mock_events():
+        return [
+            {
+                "id": "GW240101_123456",
+                "source": "GWOSC",
+                "event_type": "gravitational_wave",
+                "type": "gravitational_wave",
+                "time": "2024-01-01T12:34:56Z",
+                "timestamp": "2024-01-01T12:34:56Z",
+                "ra": 150.2,
+                "dec": -45.8,
+                "coordinates": {"ra": 150.2, "dec": -45.8},
+                "confidence": 0.95,
+                "priority": "HIGH",
+                "description": "Gravitational wave detection from binary black hole merger",
+                "metadata": {}
+            }
+        ]
+    
+    def get_mock_correlations():
+        return [
+            {
+                "id": "corr_001",
+                "event1_id": "GW240101_123456",
+                "event2_id": "GRB240101_125012",
+                "event1_source": "GWOSC",
+                "event2_source": "HEASARC",
+                "correlation_score": 0.95,
+                "temporal_separation_hours": 0.26,
+                "angular_separation_degrees": 0.8,
+                "confidence": 0.95,
+                "priority": "CRITICAL",
+                "scientific_interest": "BREAKTHROUGH",
+                "follow_up_recommended": True,
+                "scoring_notes": "High-confidence multi-messenger correlation"
+            }
+        ]
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -40,21 +80,40 @@ analysis_cache: Dict[str, Any] = {
 @app.get("/")
 async def root():
     """Root endpoint"""
-    return {
-        "message": "Surya Kiran Multi-Messenger Observatory API",
-        "version": "1.0.0",
-        "status": "operational",
-        "timestamp": datetime.now().isoformat()
-    }
+    try:
+        return {
+            "message": "Surya Kiran Multi-Messenger Observatory API",
+            "version": "1.0.0",
+            "status": "operational",
+            "timestamp": datetime.now().isoformat()
+        }
+    except Exception as e:
+        logger.error(f"Root endpoint error: {e}")
+        return {
+            "message": "Surya Kiran Multi-Messenger Observatory API",
+            "version": "1.0.0",
+            "status": "error",
+            "error": str(e),
+            "timestamp": datetime.now().isoformat()
+        }
 
 @app.get("/api/v1/health")
 async def health_check():
     """Health check endpoint"""
-    return {
-        "status": "healthy",
-        "timestamp": datetime.now().isoformat(),
-        "version": "1.0.0"
-    }
+    try:
+        return {
+            "status": "healthy",
+            "timestamp": datetime.now().isoformat(),
+            "version": "1.0.0"
+        }
+    except Exception as e:
+        logger.error(f"Health check error: {e}")
+        return {
+            "status": "error",
+            "timestamp": datetime.now().isoformat(),
+            "version": "1.0.0",
+            "error": str(e)
+        }
 
 @app.get("/api/v1/status")
 async def get_status():
